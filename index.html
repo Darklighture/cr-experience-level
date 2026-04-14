@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>✨CR经验等级</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Chart.js 核心与缩放插件 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #f8fafd;  
+      min-height: 100vh;
+      padding: 24px 20px;
+      color: #1e293b;       
+      line-height: 1.5;
+    }
+
+    .dashboard {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .title-section h1 {
+      font-weight: 600;
+      font-size: 2.2rem;
+      letter-spacing: -0.01em;
+      color: #0b1e33;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-section i {
+      font-size: 2rem;
+      color: #2a6bb0;
+      text-shadow: none;
+    }
+
+    .chart-card {
+      background: #ffffff;
+      border: 1px solid #e2eaf5;
+      border-radius: 28px;
+      padding: 20px 20px 16px 20px;
+      box-shadow: 0 12px 30px -8px rgba(0, 20, 50, 0.08);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 6px 10px 12px;
+    }
+
+    .chart-header h3 {
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: #1f3a5f;
+      letter-spacing: -0.2px;
+    }
+
+    .chart-header span {
+      font-size: 0.85rem;
+      background: #eef4ff;
+      padding: 4px 14px;
+      border-radius: 40px;
+      color: #1f4973;
+      border: 1px solid #cddfff;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 260px;
+      width: 100%;
+    }
+
+    .zoom-hint {
+      font-size: 0.75rem;
+      margin-top: 10px;
+      text-align: right;
+      color: #5f7d9c;
+      padding-right: 6px;
+    }
+    .zoom-hint i {
+      margin-right: 4px;
+      color: #3a73b3;
+    }
+
+    .table-card {
+      background: #ffffff;
+      border: 1px solid #e2eaf5;
+      border-radius: 28px;
+      padding: 18px 8px 12px 18px;
+      box-shadow: 0 12px 28px -10px rgba(0, 20, 40, 0.06);
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 12px 12px 8px;
+    }
+
+    .table-header h3 {
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: #1f3a5f;
+    }
+
+    .table-header i {
+      color: #2f6eb0;
+      margin-right: 6px;
+    }
+
+    .scroll-wrap {
+      max-height: 440px;
+      overflow-y: auto;
+      border-radius: 18px;
+      scrollbar-width: thin;
+      scrollbar-color: #b6cae0 #eef3fa;
+    }
+
+    .scroll-wrap::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .scroll-wrap::-webkit-scrollbar-track {
+      background: #eef3fa;
+      border-radius: 20px;
+    }
+
+    .scroll-wrap::-webkit-scrollbar-thumb {
+      background: #b6cae0;
+      border-radius: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+      min-width: 480px;
+    }
+
+    th {
+      text-align: center;
+      padding: 16px 16px 12px 16px;
+      background: #f4f9ff;
+      font-weight: 600;
+      color: #163a5e;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+      border-bottom: 2px solid #cbddf5;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th:first-child {
+      text-align: center;
+      border-top-left-radius: 16px;
+    }
+
+    th:last-child {
+      border-top-right-radius: 16px;
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5ecf5;
+      text-align: center;
+      font-weight: 450;
+      color: #1f3a54;
+      background: transparent;
+      transition: background 0.15s;
+    }
+
+    td:first-child {
+      text-align: center;
+      font-weight: 600;
+      color: #0f2b44;
+    }
+
+    tr:hover td {
+      background: #f0f7ff;
+    }
+
+    .exp-number {
+      font-feature-settings: "tnum";
+      font-variant-numeric: tabular-nums;
+    }
+
+    .footnote {
+      margin-top: 16px;
+      text-align: right;
+      font-size: 0.8rem;
+      color: #5b7899;
+      padding-right: 8px;
+    }
+
+    @media (max-width: 680px) {
+      body { padding: 16px 12px; }
+      .title-section h1 { font-size: 1.8rem; }
+      .chart-container { height: 220px; }
+    }
+
+    @media (max-width: 480px) {
+      .hero { flex-direction: column; align-items: start; gap: 12px; }
+    }
+
+    i {
+      color: #3469a8;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  
+  <div class="hero">
+    <div class="title-section">
+      <h1>
+        <i class="fas fa-crown" style="color: #e6a020;"></i>
+        皇室战争经验等级图
+      </h1>
+    </div>
+  </div>
+
+  <!-- 图表区域 (缩放已启用) -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <h3><i class="fas fa-wave-square" style="margin-right: 8px;"></i>经验等级图</h3>
+      <span><i class="far fa-calendar-alt"></i> 滚轮缩放 · 拖动平移 · 双击重置
+</span>
+    </div>
+    <div class="chart-container">
+      <canvas id="expChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 详细表格卡片 -->
+  <div class="table-card">
+    <div class="table-header">
+      <h3><i class="fas fa-table"></i> 完整经验表</h3>
+      <span style="font-size:0.8rem; color:#4b6e91;"><i class="fas fa-arrows-alt-v"></i> 滚动查看</span>
+    </div>
+    <div class="scroll-wrap">
+      <table id="expTable">
+        <thead>
+          <tr>
+            <th>等级<i class="fas fa-sort-amount-up" style="margin-left: 6px;"></i></th>
+            <th>升级所需经验<i class="fas fa-arrow-right"></i></th>
+            <th>累计经验<i class="fas fa-layer-group"></i></th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- JS 动态注入 -->
+        </tbody>
+      </table>
+    </div>
+    <div class="footnote">
+      <i class="far fa-clock"></i> 累计经验 = 到达该等级所需的总经验值
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // ----- 原始数据 -----
+    const expToNext = [
+      20, 50, 50, 50, 80, 120, 125, 130, 145, 200, 220, 280, 300, 350, 450, 550, 650, 800, 1200, 1400,
+      1600, 2000, 2300, 2700, 3000, 4000, 4600, 5400, 6000, 7000, 8000, 9000, 11000, 12500, 12500, 12500,
+      12500, 15000, 18000, 22000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000, 25000,
+      40000, 55000, 70000, 85000, 100000, 115000, 130000, 145000, 160000, 180000, 200000, 220000, 240000,
+      260000, 280000, 300000, 320000, 340000, 360000, 390000, 420000, 450000, 550000, 600000, 700000,
+      800000, 900000, 1000000, 1100000, 1200000, 1300000, 1400000, 1500000, 1600000, 1700000, 1800000,
+      1900000, 2000000, 2100000, 2200000
+    ];
+
+    const levels = Array.from({ length: 90 }, (_, i) => i + 1);
+
+    const cumulativeExp = [];
+    let running = 0;
+    for (let i = 0; i < expToNext.length; i++) {
+      running += expToNext[i];
+      cumulativeExp.push(running);
+    }
+
+    const formatNumber = (num) => new Intl.NumberFormat('en-US').format(num);
+
+    const tbody = document.getElementById('table-body');
+    function renderTable() {
+      let html = '';
+      for (let i = 0; i < levels.length; i++) {
+        const lvl = levels[i];
+        const need = expToNext[i];
+        const cum = cumulativeExp[i];
+        html += `<tr>
+          <td>${lvl}</td>
+          <td><span class="exp-number">${formatNumber(need)}</span></td>
+          <td><span class="exp-number">${formatNumber(cum)}</span></td>
+        </tr>`;
+      }
+      tbody.innerHTML = html;
+    }
+    renderTable();
+
+    const ctx = document.getElementById('expChart').getContext('2d');
+    
+    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+    gradient.addColorStop(0, 'rgba(47, 110, 176, 0.12)');
+    gradient.addColorStop(0.8, 'rgba(47, 110, 176, 0.02)');
+    
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: levels,
+        datasets: [{
+          label: '升级所需经验',
+          data: expToNext,
+          borderColor: '#1f6390',
+          backgroundColor: gradient,
+          borderWidth: 2.5,
+          pointRadius: 2.0,
+          pointHoverRadius: 7,
+          pointBackgroundColor: '#2a6bb0',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 1.8,
+          tension: 0.25,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: '#ffffff',
+            titleColor: '#153e60',
+            bodyColor: '#1f4a72',
+            borderColor: '#b8ceea',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              label: (ctx) => `Exp: ${formatNumber(ctx.raw)}`,
+              title: (items) => `等级 ${items[0].label}`
+            }
+          },
+
+          zoom: {
+            pan: {
+              enabled: true,
+              mode: 'x',           
+              modifierKey: null,   
+            },
+            zoom: {
+              wheel: {
+                enabled: true,
+                speed: 0.08,
+              },
+              pinch: {
+                enabled: true
+              },
+              mode: 'x',          
+              drag: false,
+            },
+            limits: {
+              x: { min: 1, max: 90 }, 
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false, drawBorder: true, color: '#d9e4f0' },
+            border: { color: '#b0c8e0' },
+            ticks: { 
+              color: '#274e73',
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 14,
+              callback: (val, index) => (levels[index] % 5 === 0 || index === 0 || index === 89) ? levels[index] : null
+            },
+            title: { display: false }
+          },
+          y: {
+            grid: { color: '#e0eaf5' },
+            border: { color: '#b0c8e0' },
+            ticks: { 
+              color: '#1f4a72',
+              callback: (value) => {
+                if (value >= 1e6) return (value / 1e6).toFixed(1) + 'M';
+                if (value >= 1e3) return (value / 1e3).toFixed(0) + 'k';
+                return value;
+              }
+            },
+            title: { display: false }
+          }
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        elements: { line: { borderJoinStyle: 'round' } }
+      }
+    });
+
+    const canvas = document.getElementById('expChart');
+    canvas.addEventListener('dblclick', function() {
+      chart.resetZoom();
+    });
+  })();
+</script>
+
+<!-- 确保缩放插件注册 (Chart.js自动识别) -->
+</body>
+</html>
